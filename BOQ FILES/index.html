@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#172026">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="BOQ Calc">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Intelligent BOQ Calculator</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <span class="brand-mark"><img src="empire-formwork-logo.png" alt="Empire Formwork logo"></span>
+          <div>
+            <h1>Empire Formwork BOQ</h1>
+            <p>Area, volume, formwork.</p>
+          </div>
+        </div>
+        <nav class="element-tabs" aria-label="Element types">
+          <button class="tab active" data-element="slab" type="button">Slabs</button>
+          <button class="tab" data-element="isolatedFooting" type="button">Isolated Footing</button>
+          <button class="tab" data-element="padFooting" type="button">Pad Footing</button>
+          <button class="tab" data-element="wall" type="button">Walls</button>
+          <button class="tab" data-element="roundColumn" type="button">Round / Radius</button>
+        </nav>
+        <div class="sidebar-actions">
+          <button id="exportCsvBtn" class="ghost-button" type="button">Export CSV</button>
+          <button id="exportJsonBtn" class="primary-button" type="button">Backup JSON</button>
+        </div>
+      </aside>
+
+      <main class="content">
+        <section class="topbar">
+          <div>
+            <p class="eyebrow">Concrete and formwork quantities</p>
+            <h2 id="pageTitle">Slabs</h2>
+          </div>
+          <div class="topbar-actions">
+            <button id="printBtn" class="ghost-button" type="button">Print</button>
+            <button id="clearBtn" class="danger-button" type="button">Clear BOQ</button>
+          </div>
+        </section>
+
+        <section class="workspace-grid">
+          <form id="calcForm" class="panel form-panel">
+            <div class="panel-heading">
+              <h3>Element Parameters</h3>
+              <button id="resetFormBtn" class="small-button" type="reset">Reset</button>
+            </div>
+
+            <label>Element Name
+              <input name="name" id="elementName" placeholder="Example: Ground floor slab A" required>
+            </label>
+
+            <div class="form-row">
+              <label>Quantity Count
+                <input name="count" type="number" inputmode="decimal" min="0" step="1" value="1">
+              </label>
+              <label>Shape
+                <select name="shape" id="shapeSelect">
+                  <option value="rectangle">Rectangle / square</option>
+                  <option value="circle">Circle / radius</option>
+                </select>
+              </label>
+            </div>
+
+            <div class="form-row dimension rectangle-only">
+              <label>Length LM
+                <input name="length" type="number" inputmode="decimal" min="0" step="0.001" placeholder="0.000">
+              </label>
+              <label>Width
+                <input name="width" type="number" inputmode="decimal" min="0" step="0.001" placeholder="0.000">
+              </label>
+            </div>
+
+            <div class="form-row dimension circle-only hidden">
+              <label>Radius
+                <input name="radius" type="number" inputmode="decimal" min="0" step="0.001" placeholder="0.000">
+              </label>
+              <label>Diameter
+                <input name="diameter" type="number" inputmode="decimal" min="0" step="0.001" placeholder="Optional">
+              </label>
+            </div>
+
+            <div class="form-row">
+              <label>Height
+                <input name="height" type="number" inputmode="decimal" min="0" step="0.001" placeholder="0.000">
+              </label>
+              <label>Waste %
+                <input name="waste" type="number" inputmode="decimal" min="0" step="0.1" value="5">
+              </label>
+            </div>
+
+            <section class="thickness-section">
+              <div class="section-title">
+                <h4>Thickness</h4>
+                <button id="toggleThicknessBtn" class="arrow-button" type="button" aria-expanded="true">⌃</button>
+              </div>
+              <div id="thicknessPanel" class="thickness-panel">
+                <div id="thicknessChips" class="chips"></div>
+                <label>Custom Thickness mm
+                  <input name="thicknessMm" id="thicknessInput" type="number" inputmode="decimal" min="0" step="1" placeholder="Example: 150">
+                </label>
+              </div>
+            </section>
+
+            <section class="formwork-section">
+              <div class="section-title">
+                <h4>Formwork Items</h4>
+                <button id="toggleFormworkBtn" class="arrow-button" type="button" aria-expanded="true">⌃</button>
+              </div>
+              <div id="formworkPanel" class="stack">
+                <label class="check-row"><input name="edgeBoard" type="checkbox" checked> Edge board / side form</label>
+                <label class="check-row"><input name="slabFormwork" type="checkbox"> Slab soffit formwork</label>
+                <label class="check-row"><input name="wallFaces" type="checkbox" checked> Wall / footing side faces</label>
+                <label class="check-row"><input name="plywood" type="checkbox" checked> Plywood sheets</label>
+                <div class="form-row">
+                  <label>Plywood Length
+                    <input name="plyLength" type="number" inputmode="decimal" min="0" step="0.001" value="2.4">
+                  </label>
+                  <label>Plywood Width
+                    <input name="plyWidth" type="number" inputmode="decimal" min="0" step="0.001" value="1.2">
+                  </label>
+                </div>
+              </div>
+            </section>
+
+            <button class="primary-button" type="submit">Add to BOQ</button>
+          </form>
+
+          <section class="panel results-panel">
+            <div class="panel-heading">
+              <h3>Calculated Result</h3>
+              <span id="elementBadge" class="badge">Slab</span>
+            </div>
+            <div class="metrics-grid">
+              <article class="metric"><span>Plan Area</span><strong id="planArea">0.000 m²</strong></article>
+              <article class="metric"><span>Volume</span><strong id="volume">0.000 m³</strong></article>
+              <article class="metric"><span>Perimeter / LM</span><strong id="perimeter">0.000 lm</strong></article>
+              <article class="metric"><span>Formwork Area</span><strong id="formworkArea">0.000 m²</strong></article>
+            </div>
+            <div id="smartNotes" class="smart-notes"></div>
+          </section>
+        </section>
+
+        <section class="panel boq-panel">
+          <div class="panel-heading">
+            <h3>BOQ Lines</h3>
+            <div class="totals">
+              <span id="totalVolume">0.000 m³</span>
+              <span id="totalFormwork">0.000 m² FW</span>
+              <span id="totalPlywood">0 sheets</span>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Element</th>
+                  <th>Name</th>
+                  <th>Dimensions</th>
+                  <th>Area</th>
+                  <th>Volume</th>
+                  <th>Formwork</th>
+                  <th>Plywood</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="boqRows"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="panel help-panel">
+          <h3>Included Rules</h3>
+          <div class="rules-grid">
+            <p><b>Slab:</b> area = length x width, volume = area x thickness, edge board = perimeter x thickness.</p>
+            <p><b>Footings:</b> volume = plan area x height, side formwork = perimeter x height.</p>
+            <p><b>Walls:</b> volume = length x thickness x height, formwork = two faces plus optional ends.</p>
+            <p><b>Radius elements:</b> area = πr², volume = area x height, side formwork = circumference x height.</p>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
